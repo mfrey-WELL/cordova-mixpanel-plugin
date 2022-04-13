@@ -4,7 +4,7 @@
 # set -e
 set -v
 
-VERSION="3.9.0"
+VERSION="3.9.2"
 ZIPFILE="v$VERSION.zip"
 pwd=$(pwd)
 echo $pwd

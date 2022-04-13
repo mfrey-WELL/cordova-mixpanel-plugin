@@ -20,7 +20,10 @@
 #if !MIXPANEL_NO_NOTIFICATION_AB_TEST_SUPPORT
 #import "NSThread+MPHelpers.h"
 #endif
-#if defined(MIXPANEL_MACOS)
+#if defined(MIXPANEL_WATCHOS)
+#import "MixpanelWatchProperties.h"
+#import <WatchKit/WatchKit.h>
+#elif defined(MIXPANEL_MACOS)
 #import <IOKit/IOKitLib.h>
 #endif
 
@@ -28,7 +31,7 @@
 #error The Mixpanel library must be compiled with ARC enabled
 #endif
 
-#define VERSION @"3.9.0"
+#define VERSION @"3.9.2"
 
 NSString *const MPNotificationTypeMini = @"mini";
 NSString *const MPNotificationTypeTakeover = @"takeover";
@@ -192,9 +195,6 @@ static CTTelephonyNetworkInfo *telephonyInfo;
             self.automaticEvents = [[AutomaticEvents alloc] init];
             self.automaticEvents.delegate = self;
             [self.automaticEvents initializeEvents:self.people];
-#endif
-#if !MIXPANEL_NO_CONNECT_INTEGRATION_SUPPORT
-        self.connectIntegrations = [[MPConnectIntegrations alloc] initWithMixpanel:self];
 #endif
 #if !MIXPANEL_NO_NOTIFICATION_AB_TEST_SUPPORT
             [self executeCachedVariants];
@@ -452,34 +452,33 @@ static CTTelephonyNetworkInfo *telephonyInfo;
             self.anonymousId = self.distinctId;
             self.hadPersistedDistinctId = YES;
         }
-        // identify only changes the distinct id if it doesn't match either the existing or the alias;
+        // identify only changes the distinct id if it doesn't match the ID
         // if it's new, blow away the alias as well.
-        if (![distinctId isEqualToString:self.alias]) {
-            if (![distinctId isEqualToString:self.distinctId]) {
-                NSString *oldDistinctId = [self.distinctId copy];
-                self.alias = nil;
-                self.distinctId = distinctId;
-                self.userId = distinctId;
-                [self track:@"$identify" properties:@{@"$anon_distinct_id": oldDistinctId}];
-            }
-            if (usePeople) {
-                self.people.distinctId = distinctId;
-                if (self.people.unidentifiedQueue.count > 0) {
-                    for (NSMutableDictionary *r in self.people.unidentifiedQueue) {
-                        r[@"$distinct_id"] = self.distinctId;
-                        @synchronized (self) {
-                            [self.peopleQueue addObject:r];
-                        }
-                    }
-                    @synchronized (self) {
-                        [self.people.unidentifiedQueue removeAllObjects];
-                    }
-                    [self archivePeople];
-                }
-            } else {
-                self.people.distinctId = nil;
-            }
+        if (![distinctId isEqualToString:self.distinctId]) {
+            NSString *oldDistinctId = [self.distinctId copy];
+            self.alias = nil;
+            self.distinctId = distinctId;
+            self.userId = distinctId;
+            [self track:@"$identify" properties:@{@"$anon_distinct_id": oldDistinctId}];
         }
+        if (usePeople) {
+            self.people.distinctId = distinctId;
+            if (self.people.unidentifiedQueue.count > 0) {
+                for (NSMutableDictionary *r in self.people.unidentifiedQueue) {
+                    r[@"$distinct_id"] = self.distinctId;
+                    @synchronized (self) {
+                        [self.peopleQueue addObject:r];
+                    }
+                }
+                @synchronized (self) {
+                    [self.people.unidentifiedQueue removeAllObjects];
+                }
+                [self archivePeople];
+            }
+        } else {
+            self.people.distinctId = nil;
+        }
+        
         [self archiveProperties];
     });
 #if MIXPANEL_FLUSH_IMMEDIATELY
@@ -1040,9 +1039,6 @@ typedef NSDictionary*(^PropertyUpdate)(NSDictionary*);
             self.decideResponseCached = NO;
             self.variants = [NSSet set];
             self.eventBindings = [NSSet set];
-#if !MIXPANEL_NO_CONNECT_INTEGRATION_SUPPORT
-            [self.connectIntegrations reset];
-#endif
 #if !MIXPANEL_NO_NOTIFICATION_AB_TEST_SUPPORT
             if (![Mixpanel isAppExtension]) {
                 [[MPTweakStore sharedInstance] reset];
@@ -1615,7 +1611,9 @@ typedef NSDictionary*(^PropertyUpdate)(NSDictionary*);
 
 - (NSDictionary *)collectDeviceProperties
 {
-#if defined(MIXPANEL_MACOS)
+#if defined(MIXPANEL_WATCHOS)
+    return [MixpanelWatchProperties collectDeviceProperties];
+#elif defined(MIXPANEL_MACOS)
     CGSize size = [NSScreen mainScreen].frame.size;
     return @{
              @"$os": @"macOS",
@@ -1650,7 +1648,18 @@ typedef NSDictionary*(^PropertyUpdate)(NSDictionary*);
     if (![Mixpanel isAppExtension]) {
         CTCarrier *carrier = nil;
         if (@available(iOS 12, *)) {
-            carrier = [[telephonyInfo serviceSubscriberCellularProviders] allValues].firstObject;
+            NSArray *carriers = [[telephonyInfo serviceSubscriberCellularProviders] allValues];
+            // Find the first carrier object that has a non-empty name
+            for (CTCarrier *carrierCandidate in carriers) {
+                if (carrierCandidate.carrierName.length != 0) {
+                    carrier = carrierCandidate;
+                    break;
+                }
+            }
+            // Use the first object as fallback in case there are no carriers with a name
+            if (carrier == nil) {
+                carrier = carriers.firstObject;
+            }
         } else {
             carrier = [telephonyInfo subscriberCellularProvider];
         }
@@ -2207,13 +2216,6 @@ static void MixpanelReachabilityCallback(SCNetworkReachabilityRef target, SCNetw
                         [self archiveProperties];
                     }
                 }
-
-#if !MIXPANEL_NO_CONNECT_INTEGRATION_SUPPORT
-                id integrations = object[@"integrations"];
-                if ([integrations isKindOfClass:[NSArray class]]) {
-                    [self.connectIntegrations setupIntegrations:integrations];
-                }
-#endif
 
                 // Variants that are already running (may or may not have been marked as finished).
                 NSSet *runningVariants = [NSSet setWithSet:[self.variants objectsPassingTest:^BOOL(MPVariant *var, BOOL *stop) { return var.running; }]];

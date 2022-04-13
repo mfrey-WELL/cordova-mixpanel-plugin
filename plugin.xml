@@ -28,7 +28,7 @@
 
         <!-- Plugin files -->
         <source-file src="src/android/MixpanelPlugin.java" target-dir="src/android"/>
-        <framework src="com.mixpanel.android:mixpanel-android:5.9.1"/>
+        <framework src="com.mixpanel.android:mixpanel-android:5.9.6"/>
 
         <!--
         This Mixpanel plugin doesn't force a specifics versions for 
@@ -96,7 +96,6 @@
         <header-file src="src/ios/Mixpanel/MPAbstractABTestDesignerMessage.h" target-dir="Mixpanel"/>
         <header-file src="src/ios/Mixpanel/MPApplicationStateSerializer.h" target-dir="Mixpanel"/>
         <header-file src="src/ios/Mixpanel/MPClassDescription.h" target-dir="Mixpanel"/>
-        <header-file src="src/ios/Mixpanel/MPConnectIntegrations.h" target-dir="Mixpanel"/>
         <header-file src="src/ios/Mixpanel/MPDesignerEventBindingMessage.h" target-dir="Mixpanel"/>
         <header-file src="src/ios/Mixpanel/MPDesignerSessionCollection.h" target-dir="Mixpanel"/>
         <header-file src="src/ios/Mixpanel/MPDisplayTrigger.h" target-dir="Mixpanel"/>
@@ -177,7 +176,6 @@
         <source-file src="src/ios/Mixpanel/MPCGRectToNSDictionaryValueTransformer.m" target-dir="Mixpanel"/>
         <source-file src="src/ios/Mixpanel/MPCGSizeToNSDictionaryValueTransformer.m" target-dir="Mixpanel"/>
         <source-file src="src/ios/Mixpanel/MPClassDescription.m" target-dir="Mixpanel"/>
-        <source-file src="src/ios/Mixpanel/MPConnectIntegrations.m" target-dir="Mixpanel"/>
         <source-file src="src/ios/Mixpanel/MPDesignerEventBindingRequestMesssage.m" target-dir="Mixpanel"/>
         <source-file src="src/ios/Mixpanel/MPDesignerEventBindingResponseMesssage.m" target-dir="Mixpanel"/>
         <source-file src="src/ios/Mixpanel/MPDesignerTrackMessage.m" target-dir="Mixpanel"/>
@@ -248,7 +246,6 @@
         <resource-file src="src/ios/Mixpanel/Images/MPLogo.png" target-dir="Mixpanel/Images"/>
         <resource-file src="src/ios/Mixpanel/Images/MPLogo@2x.png" target-dir="Mixpanel/Images"/>
         <resource-file src="src/ios/Mixpanel/Images/placeholder-image.png" target-dir="Mixpanel/Images"/>
-        <resource-file src="src/ios/Mixpanel/LICENSE" target-dir="Mixpanel"/>
         <resource-file src="src/ios/Mixpanel/MPTakeoverNotificationViewController~ipad.xib" target-dir="Mixpanel"/>
         <resource-file src="src/ios/Mixpanel/MPTakeoverNotificationViewController~iphonelandscape.xib" target-dir="Mixpanel"/>
         <resource-file src="src/ios/Mixpanel/MPTakeoverNotificationViewController~iphoneportrait.xib" target-dir="Mixpanel"/>
